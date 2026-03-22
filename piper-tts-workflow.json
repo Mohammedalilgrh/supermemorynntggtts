@@ -1,0 +1,96 @@
+{
+  "name": "Piper TTS - Text to Speech",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tts",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "piper-tts-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── Validate & extract input ──────────────────────────\nconst body = $input.first().json.body ?? $input.first().json;\n\nconst text     = (body.text     ?? '').trim();\nconst language = (body.language ?? 'ar').trim();\nconst speed    = parseFloat(body.speed ?? 1.0);\nconst mode     = (body.mode    ?? 'base64').trim(); // 'wav' | 'base64'\n\n// Validate\nif (!text) {\n  throw new Error('Missing required field: text');\n}\nif (text.length > 5000) {\n  throw new Error('text too long — max 5000 characters');\n}\nif (!['ar','en','en-male'].includes(language)) {\n  throw new Error(`Unknown language: '${language}'. Use: ar | en | en-male`);\n}\nif (speed < 0.5 || speed > 3.0) {\n  throw new Error('speed must be between 0.5 and 3.0');\n}\n\nreturn [{ json: { text, language, speed, mode } }];"
+      },
+      "id": "a1b2c3d4-0002-0002-0002-000000000002",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://supermemorynntggtts.onrender.com/tts-base64",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"{{ $json.text }}\",\n  \"language\": \"{{ $json.language }}\",\n  \"speed\": {{ $json.speed }}\n}",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          }
+        }
+      },
+      "id": "a1b2c3d4-0003-0003-0003-000000000003",
+      "name": "Call Piper TTS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              { "name": "Content-Type", "value": "application/json" }
+            ]
+          }
+        }
+      },
+      "id": "a1b2c3d4-0004-0004-0004-000000000004",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Validate Input", "type": "main", "index": 0 }]]
+    },
+    "Validate Input": {
+      "main": [[{ "node": "Call Piper TTS", "type": "main", "index": 0 }]]
+    },
+    "Call Piper TTS": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "versionId": "1"
+}

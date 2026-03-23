@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Piper TTS Service")
 
-# Allow n8n calls from anywhere
+# Allow n8n or any frontend to call
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,7 +19,6 @@ MODELS_DIR = os.getenv("MODELS_DIR", "./models")
 CHUNK_SIZE = 2000  # max characters per Piper call
 
 def split_text(text: str, max_len=CHUNK_SIZE):
-    """Split text into safe chunks for TTS"""
     return [text[i:i+max_len] for i in range(0, len(text), max_len)]
 
 @app.post("/speak")
@@ -49,7 +48,7 @@ async def speak(payload: dict):
         output_file = os.path.join(tmpdir, "final.wav")
         final_audio.export(output_file, format="wav")
 
-        # Return audio bytes
+        # Return audio bytes directly
         return {
             "audio_filename": "tts.wav",
             "audio_bytes": open(output_file, "rb").read()

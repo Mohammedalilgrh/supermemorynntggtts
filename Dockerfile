@@ -1,7 +1,7 @@
-# ── Base image ───────────────────────────────────────────────────────────────
+# ── Base image
 FROM python:3.11-slim
 
-# ── تثبيت الأدوات الأساسية ──────────────────────────────────────────────────
+# ── تثبيت الأدوات الأساسية
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
@@ -12,11 +12,11 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# ── إنشاء بيئة افتراضية لتثبيت بايثون ───────────────────────────────────────
+# ── إنشاء بيئة افتراضية
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# ── تثبيت Piper binary ──────────────────────────────────────────────────────
+# ── تثبيت Piper binary
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
         PIPER_URL="https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_x86_64.tar.gz"; \
@@ -30,7 +30,7 @@ RUN ARCH=$(uname -m) && \
     rm piper.tar.gz && \
     chmod +x /app/piper/piper
 
-# ── تحميل أصوات Piper ───────────────────────────────────────────────────────
+# ── تحميل الأصوات
 RUN mkdir -p /app/models
 
 # Arabic - ar_JO-kareem-medium
@@ -51,12 +51,12 @@ RUN wget -q "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US
     wget -q "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/ryan/medium/en_US-ryan-medium.onnx.json" \
     -O /app/models/en_US-ryan-medium.onnx.json
 
-# ── تثبيت بايثون dependencies داخل البيئة الافتراضية ───────────────────────
+# ── تثبيت بايثون dependencies داخل البيئة الافتراضية
 COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# ── نسخ تطبيق FastAPI ───────────────────────────────────────────────────────
+# ── نسخ تطبيق FastAPI
 COPY main.py .
 
 ENV MODELS_DIR=/app/models
@@ -64,5 +64,5 @@ ENV PORT=8000
 
 EXPOSE 8000
 
-# ── تشغيل الخدمة ────────────────────────────────────────────────────────────
+# ── تشغيل الخدمة
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

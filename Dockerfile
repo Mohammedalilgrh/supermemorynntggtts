@@ -1,16 +1,18 @@
+# ── Base image ───────────────────────────────────────────────────────────────
 FROM python:3.11-slim
 
-# Install system deps
+# ── Install system dependencies ──────────────────────────────────────────────
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
     tar \
     ca-certificates \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# ── Install Piper binary ──────────────────────────────────────────────────────
+# ── Install Piper binary ─────────────────────────────────────────────────────
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
         PIPER_URL="https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_x86_64.tar.gz"; \
@@ -45,11 +47,11 @@ RUN wget -q "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US
     wget -q "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/ryan/medium/en_US-ryan-medium.onnx.json" \
     -O /app/models/en_US-ryan-medium.onnx.json
 
-# ── Install Python deps ───────────────────────────────────────────────────────
+# ── Python dependencies ──────────────────────────────────────────────────────
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# ── Copy app ──────────────────────────────────────────────────────────────────
+# ── Copy FastAPI app ─────────────────────────────────────────────────────────
 COPY main.py .
 
 ENV MODELS_DIR=/app/models

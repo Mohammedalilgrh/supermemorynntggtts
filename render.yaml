@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: tts-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: AR_MODEL
+        value: "/usr/local/share/piper-voices/ar_JO-kareem-medium.onnx"
+      - key: EN_MODEL
+        value: "/usr/local/share/piper-voices/en_GB-vctk-medium.onnx"
+      - key: API_KEY
+        sync: false   # set this in Render dashboard for security (optional)
